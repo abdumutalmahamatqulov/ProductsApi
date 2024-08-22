@@ -6,7 +6,7 @@ namespace ProductsApi.v1.Auth.Services.Interfaces;
 
 public interface IAuthService
 {
-    ValueTask<UserModel> Registration(UserCreateModel user);
-    Task<TokenModel> Login(UserCreateModel model);
+    ValueTask<UserModel> Registration(RegisterModel user);
+    ValueTask<TokenModel> Login(LoginModel model);
 
 }

@@ -7,7 +7,8 @@ public class CategoryModel
     public Guid Id { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
-    public DateTime CreateDate { get; set; }
+    public DateTime UpdateAt { get; set; }
+    public DateTime CreateAt { get; set; }
 
     public static implicit operator CategoryModel(Category entity)
     {
@@ -18,7 +19,17 @@ public class CategoryModel
             Id = entity.Id,
             Name = entity.Name,
             Description = entity.Description,
-            CreateDate = entity.CreateDate
+            CreateAt = entity.CreatedAt,
+            UpdateAt = entity.UpdatedAt
         };
+    }
+    public CategoryModel MapFromEntity(Category entity)
+    {
+        Id = entity.Id;
+        Name = entity.Name;
+        Description = entity.Description;
+        CreateAt = entity.CreatedAt;
+        UpdateAt = entity.UpdatedAt;
+        return this;
     }
 }

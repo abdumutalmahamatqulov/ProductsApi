@@ -12,8 +12,8 @@ using ProductsApi.Data.Contexts;
 namespace ProductsApi.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240504105344_First")]
-    partial class First
+    [Migration("20240523122404_Check2")]
+    partial class Check2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,10 +36,12 @@ namespace ProductsApi.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("NormalizedName")
+                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
@@ -47,10 +49,23 @@ namespace ProductsApi.Data.Migrations
 
                     b.HasIndex("NormalizedName")
                         .IsUnique()
-                        .HasDatabaseName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
+                        .HasDatabaseName("RoleNameIndex");
 
                     b.ToTable("AspNetRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("a2764599-ece5-4f15-b221-a5a77e87eb76"),
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = new Guid("066ffda9-706f-44c1-8e63-0de63801376d"),
+                            Name = "SuperAdmin",
+                            NormalizedName = "SUPERADMIN"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -135,6 +150,13 @@ namespace ProductsApi.Data.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = new Guid("cde79a12-0364-4df7-ac73-9b9fb0a41745"),
+                            RoleId = new Guid("066ffda9-706f-44c1-8e63-0de63801376d")
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
@@ -178,6 +200,35 @@ namespace ProductsApi.Data.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("ProductsApi.Data.Entities.FileMetadata", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Extension")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FileMetadatas");
+                });
+
             modelBuilder.Entity("ProductsApi.Data.Entities.Product", b =>
                 {
                     b.Property<Guid>("Id")
@@ -197,6 +248,9 @@ namespace ProductsApi.Data.Migrations
                     b.Property<int>("DisCount")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("FileMetadataId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -207,6 +261,8 @@ namespace ProductsApi.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("FileMetadataId");
 
                     b.ToTable("Products");
                 });
@@ -275,6 +331,23 @@ namespace ProductsApi.Data.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("cde79a12-0364-4df7-ac73-9b9fb0a41745"),
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "1e0cea47-8145-4118-8a0c-a805d87ad736",
+                            Email = "oybek@gmail.com",
+                            EmailConfirmed = true,
+                            LockoutEnabled = false,
+                            NormalizedEmail = "OYBEK@GMAIL.COM",
+                            NormalizedUserName = "OYBEK",
+                            PasswordHash = "AQAAAAIAAYagAAAAEFO6ftiV/u05Xiv1Lorpej0W6LEmFqXnGUKSe6VaVecjWdxevE/+3Rn0o/QwxZOXfQ==",
+                            PhoneNumberConfirmed = false,
+                            TwoFactorEnabled = false,
+                            UserName = "Oybek"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -336,7 +409,13 @@ namespace ProductsApi.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ProductsApi.Data.Entities.FileMetadata", "FileMetadata")
+                        .WithMany()
+                        .HasForeignKey("FileMetadataId");
+
                     b.Navigation("Category");
+
+                    b.Navigation("FileMetadata");
                 });
 #pragma warning restore 612, 618
         }

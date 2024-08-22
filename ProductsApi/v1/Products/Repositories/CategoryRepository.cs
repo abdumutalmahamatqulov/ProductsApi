@@ -1,11 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProductsApi.Data.Contexts;
 using ProductsApi.Data.Entities;
+using ProductsApi.v1.Auth.Services.Exceptions;
+using ProductsApi.v1.Common.Repositories;
+using ProductsApi.v1.Products.Models;
 using ProductsApi.v1.Products.Repositories.Interfaces;
 
 namespace ProductsApi.v1.Products.Repositories;
 
-public class CategoryRepository : ICategoryRepository
+public class CategoryRepository : BaseRepository<Category,CategoryFilterModel>, ICategoryRepository
 {
     private readonly AppDbContext _appDbContext;
 
@@ -16,25 +19,25 @@ public class CategoryRepository : ICategoryRepository
 
     public async Task<Category> Create(Category entity)
     {
-        var categoryCreate = new Category();
-        categoryCreate.Id = entity.Id;
-        categoryCreate.Name = entity.Name;
-        categoryCreate.Description = entity.Description;
-        categoryCreate.CreateDate = DateTime.Now;
-        _appDbContext.Categories.Add(categoryCreate);
+
+        entity.CreatedAt = DateTime.Now;
+        entity.UpdatedAt = DateTime.Now;
+        _appDbContext.Categories.Add(entity);
         await _appDbContext.SaveChangesAsync();
-        return categoryCreate;
+        return entity;
     }
 
     public async Task<Category> Update(Category entity)
     {
-        var categoryCreate = await _appDbContext.Categories.FirstOrDefaultAsync(c => c.Id == entity.Id);
-        categoryCreate.Name = entity.Name;
-        categoryCreate.Description = entity.Description;
-        categoryCreate.CreateDate = entity.CreateDate;
-        _appDbContext.Categories.Update(categoryCreate);
-        await _appDbContext.SaveChangesAsync();
-        return categoryCreate;
+        await _appDbContext.Categories.Where(c => c.Id == entity.Id)
+            .ExecuteUpdateAsync(
+            c => c.SetProperty(c=>c.Name,c=>entity.Name)
+            .SetProperty(c=>c.Description,c=>entity.Description)
+            .SetProperty(c=>c.CreatedAt,c=>entity.CreatedAt)
+            .SetProperty(c => c.UpdatedAt,c=>DateTime.UtcNow)
+            );
+        return await _appDbContext.Categories.AsNoTracking().FirstOrDefaultAsync(c => c.Id == entity.Id);
+
     }
 
     public async Task<Category> Delete(Guid id)
@@ -52,11 +55,28 @@ public class CategoryRepository : ICategoryRepository
 
     public Task<Category> Get(Guid id)
     {
-        return _appDbContext.Categories.FirstOrDefaultAsync(c=>c.Id == id);
+        try
+        {
+            return _appDbContext.Categories.FirstOrDefaultAsync(c=>c.Id == id);
+        }
+        catch(ProductApiException ex)
+        {
+            throw new ProductApiException(500, "category_can_not_Find");
+        }
+
     }
 
-    public IQueryable<Category> GetAll(bool includeCategory)
+    protected override IQueryable<Category> GetQuery(CategoryFilterModel model)
     {
-        return _appDbContext.Categories.AsQueryable();
+        var query = _appDbContext.Categories.AsNoTracking();
+        if(model.Id.HasValue && model.Id.Value != Guid.Empty)
+        {
+            query = query.Where(x=>x.Id == model.Id);
+        }
+        if(!string.IsNullOrEmpty(model.Name) && !string.IsNullOrWhiteSpace(model.Name))
+        {
+            query = query.Where(x => EF.Functions.Like(x.Name.ToLower(), $"%{model.Name.Trim().ToLower()}%"));
+        }
+        return query;
     }
 }

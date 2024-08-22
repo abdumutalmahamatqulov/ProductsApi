@@ -7,6 +7,10 @@ using ProductsApi.v1.Auth.Services.AuthServices;
 using ProductsApi.v1.Auth.Services.Exceptions;
 using ProductsApi.v1.Auth.Services.Interfaces;
 using ProductsApi.v1.Auth.TokenGenerators;
+using ProductsApi.v1.FileMetadata.Repositories;
+using ProductsApi.v1.FileMetadata.Repositories.Interfaces;
+using ProductsApi.v1.FileMetadata.Services;
+using ProductsApi.v1.FileMetadata.Services.Interfaces;
 using ProductsApi.v1.Products.Repositories;
 using ProductsApi.v1.Products.Repositories.Interfaces;
 using ProductsApi.v1.Products.Services;
@@ -19,11 +23,15 @@ public static class AddExtensionServices
     {
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ITokenRepository, TokenRepository>();
-
+        services.AddScoped<IUserService, UserService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<IFileMetadataService, FileMetadataService>();
+
+        services.AddScoped<IFileMetadataRepository, FileMetadataRepository>();
         services.AddScoped<ICategoryRepository,CategoryRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
+
         return services;
     }
 
@@ -65,7 +73,11 @@ public static class AddExtensionServices
         });
 
         services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddAuthentication(cfg =>
+            {
+                cfg.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                cfg.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
             .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters

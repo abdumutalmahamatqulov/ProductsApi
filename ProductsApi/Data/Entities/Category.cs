@@ -1,9 +1,9 @@
-﻿namespace ProductsApi.Data.Entities;
+﻿using ProductsApi.Data.Entities.Commons;
 
-public class Category 
+namespace ProductsApi.Data.Entities;
+
+public class Category :Auditable
 {
-    public Guid Id { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
-    public DateTime CreateDate { get; set; }
 }
